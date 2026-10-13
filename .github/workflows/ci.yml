@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.so }}
+
+    # bash nos tres sistemas: no Windows o shell padrao e o PowerShell, e ele
+    # desmonta "-Dexec.args=..." em dois argumentos antes de o Maven ver.
+    defaults:
+      run:
+        shell: bash
+
+    strategy:
+      fail-fast: false
+      matrix:
+        so: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+
+      - name: Testes
+        run: mvn -B -ntp verify
+
+      - name: a programacao dinamica bate a forca bruta em toda consulta
+        run: mvn -B -ntp -q exec:java -Dexec.args="correcao"
+
+      - name: o preco de nao otimizar
+        run: mvn -B -ntp -q exec:java -Dexec.args="ordem"
+
+      - name: arvore a esquerda contra arvore qualquer
+        run: mvn -B -ntp -q exec:java -Dexec.args="forma"
+
+      - name: o guloso contra o otimo
+        run: mvn -B -ntp -q exec:java -Dexec.args="guloso"
+
+      - name: o otimo com estimativa errada
+        run: mvn -B -ntp -q exec:java -Dexec.args="estimativa"
+
+      - name: Relatorios de teste
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-${{ matrix.so }}
+          path: target/surefire-reports
